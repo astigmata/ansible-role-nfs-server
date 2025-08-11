@@ -14,12 +14,6 @@
     name: "{{ nfs_packages }}"
     state: present
 
-- name: Install SSL packages when enabled
-  ansible.builtin.package:
-    name: stunnel4
-    state: present
-  when: nfs_enable_ssl
-
 - name: Create NFS base directory
   ansible.builtin.file:
     path: "{{ nfs_base_dir }}"
@@ -84,10 +78,6 @@
     dest: /etc/exports
     backup: yes
   notify: reload nfs exports
-
-- name: Include SSL configuration tasks
-  ansible.builtin.include_tasks: ssl.yml
-  when: nfs_enable_ssl
 
 - name: Enable and start NFS services
   ansible.builtin.systemd:
