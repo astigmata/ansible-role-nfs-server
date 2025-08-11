@@ -1,0 +1,20 @@
+---
+- name: Generate SSL certificate for NFS
+  ansible.builtin.command: |
+    openssl req -x509 -newkey rsa:4096 -keyout {{ nfs_ssl_key_path }}
+    -out {{ nfs_ssl_cert_path }} -days 365 -nodes 
+    -subj "/C={{ nfs_ssl_country }}/ST={{ nfs_ssl_state }}/L={{ nfs_ssl_city }}/O={{ nfs_ssl_org }}/CN={{ ansible_fqdn }}"
+  args:
+    creates: "{{ nfs_ssl_cert_path }}"
+
+- name: Configure stunnel for NFS over TLS
+  ansible.builtin.template:
+    src: stunnel-nfs.conf.j2
+    dest: /etc/stunnel/nfs.conf
+  notify: restart stunnel
+
+- name: Enable and start stunnel
+  ansible.builtin.systemd:
+    name: stunnel4
+    enabled: yes
+    state: started

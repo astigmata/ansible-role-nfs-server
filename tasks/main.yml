@@ -1,0 +1,101 @@
+---
+- name: Include OS-specific variables
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
+  failed_when: false
+
+- name: Update package cache
+  ansible.builtin.apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  when: ansible_os_family == "Debian"
+
+- name: Install NFS server packages
+  ansible.builtin.package:
+    name: "{{ nfs_packages }}"
+    state: present
+
+- name: Install SSL packages when enabled
+  ansible.builtin.package:
+    name: stunnel4
+    state: present
+  when: nfs_enable_ssl
+
+- name: Create NFS base directory
+  ansible.builtin.file:
+    path: "{{ nfs_base_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Create service groups for subdirectories
+  ansible.builtin.group:
+    name: "{{ item.1.group }}"
+    gid: "{{ nfs_group_gid_start + ansible_loop.index }}"
+    system: yes
+  when: item.0.subdirs is defined and item.1.group != 'nogroup'
+  loop: "{{ nfs_exports | subelements('subdirs', skip_missing=True) }}"
+  loop_control:
+    extended: yes
+
+- name: Create service users for subdirectories
+  ansible.builtin.user:
+    name: "{{ item.1.owner }}"
+    uid: "{{ nfs_user_uid_start + ansible_loop.index }}"
+    group: "{{ item.1.group }}"
+    shell: /bin/false
+    home: "{{ item.0.path }}/{{ item.1.name }}"
+    create_home: no
+    system: yes
+  when: item.0.subdirs is defined and item.1.owner != 'nobody'
+  loop: "{{ nfs_exports | subelements('subdirs', skip_missing=True) }}"
+  loop_control:
+    extended: yes
+
+- name: Create NFS export directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop: "{{ nfs_exports }}"
+
+- name: Create NFS subdirectories
+  ansible.builtin.file:
+    path: "{{ item.0.path }}/{{ item.1.name }}"
+    state: directory
+    owner: "{{ item.1.owner | default('nobody') }}"
+    group: "{{ item.1.group | default('nogroup') }}"
+    mode: "{{ item.1.mode | default('0755') }}"
+  when: item.0.subdirs is defined
+  loop: "{{ nfs_exports | subelements('subdirs', skip_missing=True) }}"
+
+- name: Configure NFS ID mapping
+  ansible.builtin.template:
+    src: idmapd.conf.j2
+    dest: /etc/idmapd.conf
+    backup: yes
+  notify: restart nfs
+
+- name: Configure NFS exports
+  ansible.builtin.template:
+    src: exports.j2
+    dest: /etc/exports
+    backup: yes
+  notify: reload nfs exports
+
+- name: Include SSL configuration tasks
+  ansible.builtin.include_tasks: ssl.yml
+  when: nfs_enable_ssl
+
+- name: Enable and start NFS services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: yes
+    state: started
+  loop: "{{ nfs_services }}"
+
+- name: Include firewall configuration tasks
+  ansible.builtin.include_tasks: firewall.yml
+  when: nfs_enable_firewall

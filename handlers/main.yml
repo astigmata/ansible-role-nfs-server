@@ -1,0 +1,15 @@
+---
+- name: restart nfs
+  ansible.builtin.systemd:
+    name: nfs-kernel-server
+    state: restarted
+
+- name: restart stunnel
+  ansible.builtin.systemd:
+    name: stunnel4
+    state: restarted
+  when: nfs_enable_ssl
+
+- name: reload nfs exports
+  ansible.builtin.command: exportfs -ra
+  changed_when: false

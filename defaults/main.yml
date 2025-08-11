@@ -1,0 +1,48 @@
+---
+nfs_base_dir: /srv/nfs
+nfs_packages:
+  - nfs-kernel-server
+  - nfs-common
+  - rpcbind
+
+nfs_exports: []
+# Example:
+# nfs_exports:
+#   - path: /srv/nfs/storage
+#     clients: "192.168.0.0/16(rw,sync,no_subtree_check,no_root_squash)"
+#     subdirs:
+#       - name: app1
+#         owner: nfs-app1
+#         group: nfs-app1
+#         mode: '0750'
+
+nfs_enable_ssl: false
+nfs_ssl_cert_path: /etc/ssl/certs/nfs-server.crt
+nfs_ssl_key_path: /etc/ssl/private/nfs-server.key
+nfs_ssl_country: FR
+nfs_ssl_state: Occitanie
+nfs_ssl_city: MTP
+nfs_ssl_org: Organization
+
+nfs_enable_firewall: true
+nfs_firewall_sources: []
+# Example:
+# nfs_firewall_sources:
+#   - "192.168.0.0/16"
+#   - "10.0.0.0/8"
+
+nfs_user_uid_start: 10000
+nfs_group_gid_start: 10000
+
+nfs_services:
+  - rpcbind
+  - nfs-kernel-server
+
+nfs_ports_tcp:
+  - "111"
+  - "2049"
+  - "20048"
+
+nfs_ports_udp:
+  - "111"
+  - "2049"

@@ -1,0 +1,30 @@
+---
+- name: Check if ufw is installed and active
+  ansible.builtin.command: ufw status
+  register: ufw_status
+  failed_when: false
+  changed_when: false
+
+- name: Configure firewall for NFS TCP ports
+  community.general.ufw:
+    rule: allow
+    port: "{{ item.0 }}"
+    proto: tcp
+    src: "{{ item.1 }}"
+  loop: "{{ nfs_ports_tcp | product(nfs_firewall_sources) | list }}"
+  when:
+    - ufw_status.rc == 0
+    - "'inactive' not in ufw_status.stdout"
+    - nfs_firewall_sources | length > 0
+
+- name: Configure firewall for NFS UDP ports
+  community.general.ufw:
+    rule: allow
+    port: "{{ item.0 }}"
+    proto: udp
+    src: "{{ item.1 }}"
+  loop: "{{ nfs_ports_udp | product(nfs_firewall_sources) | list }}"
+  when:
+    - ufw_status.rc == 0
+    - "'inactive' not in ufw_status.stdout"
+    - nfs_firewall_sources | length > 0

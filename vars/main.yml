@@ -1,0 +1,2 @@
+---
+nfs_domain: "{{ ansible_domain | default('localdomain') }}"

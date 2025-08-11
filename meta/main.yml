@@ -1,0 +1,22 @@
+---
+galaxy_info:
+  author: astigmata
+  description: Generic NFS server deployment role
+  company: Organization
+  license: MIT
+  min_ansible_version: 2.9
+  platforms:
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy
+    - name: Debian
+      versions:
+        - bullseye
+        - bookworm
+  galaxy_tags:
+    - nfs
+    - storage
+    - filesystem
+
+dependencies: []

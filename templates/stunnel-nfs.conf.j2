@@ -1,0 +1,11 @@
+# {{ ansible_managed }}
+cert = {{ nfs_ssl_cert_path }}
+key = {{ nfs_ssl_key_path }}
+
+[nfs]
+accept = 20049
+connect = 127.0.0.1:2049
+
+[rpcbind]
+accept = 1111
+connect = 127.0.0.1:111
