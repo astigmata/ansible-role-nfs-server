@@ -73,7 +73,7 @@
     owner: root
     group: root
     mode: '0644'
-  notify: restart nfs
+  notify: Restart nfs
 
 - name: Configure NFS exports
   ansible.builtin.template:
@@ -83,7 +83,7 @@
     owner: root
     group: root
     mode: '0644'
-  notify: reload nfs exports
+  notify: Reload nfs exports
 
 - name: Enable and start NFS services
   ansible.builtin.systemd:
