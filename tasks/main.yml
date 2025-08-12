@@ -5,7 +5,7 @@
 
 - name: Update package cache
   ansible.builtin.apt:
-    update_cache: yes
+    update_cache: true
     cache_valid_time: 3600
   when: ansible_os_family == "Debian"
 
@@ -26,11 +26,11 @@
   ansible.builtin.group:
     name: "{{ item.1.group }}"
     gid: "{{ nfs_group_gid_start + ansible_loop.index }}"
-    system: yes
+    system: true
   when: item.0.subdirs is defined and item.1.group != 'nogroup'
   loop: "{{ nfs_exports | subelements('subdirs', skip_missing=True) }}"
   loop_control:
-    extended: yes
+    extended: true
 
 - name: Create service users for subdirectories
   ansible.builtin.user:
@@ -39,12 +39,12 @@
     group: "{{ item.1.group }}"
     shell: /bin/false
     home: "{{ item.0.path }}/{{ item.1.name }}"
-    create_home: no
-    system: yes
+    create_home: false
+    system: true
   when: item.0.subdirs is defined and item.1.owner != 'nobody'
   loop: "{{ nfs_exports | subelements('subdirs', skip_missing=True) }}"
   loop_control:
-    extended: yes
+    extended: true
 
 - name: Create NFS export directories
   ansible.builtin.file:
@@ -69,20 +69,26 @@
   ansible.builtin.template:
     src: idmapd.conf.j2
     dest: /etc/idmapd.conf
-    backup: yes
+    backup: true
+    owner: root
+    group: root
+    mode: '0644'
   notify: restart nfs
 
 - name: Configure NFS exports
   ansible.builtin.template:
     src: exports.j2
     dest: /etc/exports
-    backup: yes
+    backup: true
+    owner: root
+    group: root
+    mode: '0644'
   notify: reload nfs exports
 
 - name: Enable and start NFS services
   ansible.builtin.systemd:
     name: "{{ item }}"
-    enabled: yes
+    enabled: true
     state: started
   loop: "{{ nfs_services }}"
 
